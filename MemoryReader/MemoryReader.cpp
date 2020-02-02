@@ -6,12 +6,17 @@ using namespace std;
 
 void IntRead(HANDLE fProcess, int &intRead);
 void RefRead(HANDLE fProcess, int &IntRead);
+void StringRead(HANDLE fProcess, string &stringRead);
+void CharArrayRead(HANDLE fProcess, char charArrayRead[]);
 
 int main()
 {
-    int intRead = 0;
     int PID = 0;
+    int intRead = 0;
+    string stringRead;
+    char charArrayRead[128];
     unsigned int menuSelection = 0;
+    bool chSuccess;
 
     cout << "Write the Process ID of the application you want to read: ";
     cin >> PID;
@@ -25,16 +30,18 @@ int main()
         return EXIT_FAILURE;
     }
 
-    while (menuSelection != 3)
+    while (menuSelection != 5)
     {
-        while (menuSelection < 1 || menuSelection > 3)
+        while (menuSelection < 1 || menuSelection > 5)
         {
             cout << "Choose an option:" << endl;
             cout << "1) Read the memory of an integer" << endl;
             cout << "2) Read the memory of a reference" << endl;
-            cout << "3> Quit" << endl;
+            cout << "3) Read the memory of a string" << endl;
+            cout << "4) Read the memory of a character array" << endl;
+            cout << "5) Quit" << endl;
             cin >> menuSelection;
-            if (menuSelection < 1 || menuSelection > 3)
+            if (menuSelection < 1 || menuSelection > 5)
             {
                 cout << "Invalid selection. Try again." << endl;
             }
@@ -49,16 +56,35 @@ int main()
             break;
         case 2:
             RefRead(fProcess, intRead);
-            cout << "\nThe memory read held the integer " << intRead << endl;
+            cout << "\nThe memory the reference referenced held the integer " << intRead << endl;
             menuSelection = 0;
             cin.get();
+        case 3:
+            StringRead(fProcess, stringRead);
+            cout << "\nThe memory read held the string \"" << stringRead << "\"" << endl;
+            menuSelection = 0;
+            break;
+        case 4:
+            CharArrayRead(fProcess, charArrayRead);
+            cout << "\nThe memory read held the char array \"" << charArrayRead << "\"" << endl;
+            menuSelection = 0;
             break;
         default:
             break;
         }
     }
 
-    return EXIT_SUCCESS;
+    chSuccess = CloseHandle(fProcess);
+    if (chSuccess == NULL)
+    {
+        cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        return EXIT_SUCCESS;
+    }
+    
 }
 
 void IntRead(HANDLE fProcess, int &intRead)
@@ -95,6 +121,39 @@ void RefRead(HANDLE fProcess, int &intRead)
         exit(EXIT_FAILURE);
     }
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)pointerToInt, &intRead, 8, NULL);
+    if (RPMSuccess == NULL)
+    {
+        cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
+        cin.get();
+        exit(EXIT_FAILURE);
+    }
+}
+
+void StringRead(HANDLE fProcess, string &stringRead)
+{
+    uintptr_t memoryAddress;
+    bool RPMSuccess;
+
+    cout << "Write the memory address of a string you want to read. Must hold a string: 0x";
+    cin >> hex >> memoryAddress;
+
+    RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)memoryAddress, &stringRead, sizeof(string), NULL);
+    if (RPMSuccess == NULL)
+    {
+        cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
+        cin.get();
+        exit(EXIT_FAILURE);
+    }
+}
+
+void CharArrayRead(HANDLE fProcess, char charArrayRead[])
+{
+    uintptr_t memoryAddress;
+    bool RPMSuccess;
+    cout << "Write the memory addres of the character array you want to read. Must hold a character array: 0x";
+    cin >> hex >> memoryAddress;
+
+    RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)memoryAddress, (LPVOID)charArrayRead, 128, NULL);
     if (RPMSuccess == NULL)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
