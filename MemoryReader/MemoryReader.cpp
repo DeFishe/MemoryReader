@@ -9,6 +9,8 @@ void RefRead(HANDLE fProcess, int &IntRead);
 void StringRead(HANDLE fProcess, string &stringRead);
 void CharArrayRead(HANDLE fProcess, char charArrayRead[]);
 void IntWrite(HANDLE fProcess);
+void StringWrite(HANDLE fProcess);
+void CharArrayWrite(HANDLE fProcess);
 
 int main()
 {
@@ -80,12 +82,12 @@ int main()
             menuSelection = 0;
             break;
         case 6:
-            //insert method
+            StringWrite(fProcess);
             cout << "\nThe memory was successfully overwritten." << endl;
             menuSelection = 0;
             break;
         case 7:
-            //insert method
+            CharArrayWrite(fProcess);
             cout << "\nThe memory was successfully overwritten." << endl;
             menuSelection = 0;
             break;
@@ -95,7 +97,7 @@ int main()
     }
 
     chSuccess = CloseHandle(fProcess);
-    if (chSuccess == NULL)
+    if (chSuccess == 0)
     {
         cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         return EXIT_FAILURE;
@@ -116,11 +118,11 @@ void IntRead(HANDLE fProcess, int &intRead)
     cin >> hex >> memoryAddress;
 
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)memoryAddress, &intRead, sizeof(int), NULL);
-    if (RPMSuccess == NULL)
+    if (RPMSuccess == 0)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
@@ -140,11 +142,11 @@ void RefRead(HANDLE fProcess, int &intRead)
     cin >> hex >> addressOfPointer;
 
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)addressOfPointer, &pointerToInt, 8, NULL);
-    if (RPMSuccess == NULL)
+    if (RPMSuccess == 0)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
@@ -152,11 +154,11 @@ void RefRead(HANDLE fProcess, int &intRead)
         exit(EXIT_FAILURE);
     }
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)pointerToInt, &intRead, 8, NULL);
-    if (RPMSuccess == NULL)
+    if (RPMSuccess == 0)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
@@ -174,11 +176,11 @@ void StringRead(HANDLE fProcess, string &stringRead)
     cin >> hex >> memoryAddress;
 
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)memoryAddress, &stringRead, sizeof(string), NULL);
-    if (RPMSuccess == NULL)
+    if (RPMSuccess == 0)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
@@ -195,11 +197,11 @@ void CharArrayRead(HANDLE fProcess, char charArrayRead[])
     cin >> hex >> memoryAddress;
 
     RPMSuccess = ReadProcessMemory(fProcess, (LPCVOID)memoryAddress, (LPVOID)charArrayRead, 128, NULL);
-    if (RPMSuccess == NULL)
+    if (RPMSuccess == 0)
     {
         cout << "ReadProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
@@ -212,17 +214,67 @@ void IntWrite(HANDLE fProcess)
 {
     uintptr_t memoryAddress;
     bool WPMSuccess;
-    int intWritten;
+    int writeInt;
     cout << "Write the memory address of an integer that you want to overwrite. Must hold an integer: 0x";
     cin >> hex >> memoryAddress;
     cout << "\nWrite the number you want to write into the memory address." << endl;
-    cin >> dec >> intWritten;
-    WPMSuccess = WriteProcessMemory(fProcess, (LPVOID)memoryAddress, &intWritten, sizeof(int), NULL);
-    if (WPMSuccess == NULL)
+    cin >> dec >> writeInt;
+    WPMSuccess = WriteProcessMemory(fProcess, (LPVOID)memoryAddress, &writeInt, sizeof(int), NULL);
+    if (WPMSuccess == 0)
     {
         cout << "WriteProcessMemory method failed with the following error: " << GetLastError() << endl;
         bool chSuccess = CloseHandle(fProcess);
-        if (chSuccess == NULL)
+        if (chSuccess == 0)
+        {
+            cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
+        }
+        cin.get();
+        exit(EXIT_FAILURE);
+    }
+}
+
+void StringWrite(HANDLE fProcess)
+{
+    //This function overwrites the string, but causes the program to quit due to an exception. I cannot figure out what is causing the exception.
+    bool WPMSuccess;
+    uintptr_t memoryAddress;
+    char writeCharArray [128];
+
+    cout << "Write the memory address of a string that you want to overwrite. Must hold a string: 0x";
+    cin >> hex >> memoryAddress;
+    cout << "Write the string you want to write into the memory address. Must not be longer than 13 characters." << endl;
+    cin >> writeCharArray;
+
+    WPMSuccess = WriteProcessMemory(fProcess, (LPVOID)memoryAddress, &writeCharArray, sizeof(string), NULL);
+    if (WPMSuccess == 0)
+    {
+        cout << "WriteProcessMemory method failed with the following error: " << GetLastError() << endl;
+        bool chSuccess = CloseHandle(fProcess);
+        if (chSuccess == 0)
+        {
+            cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
+        }
+        cin.get();
+        exit(EXIT_FAILURE);
+    }
+}
+
+void CharArrayWrite(HANDLE fProcess)
+{   
+    bool WPMSuccess;
+    uintptr_t memoryAddress;
+    string readString;
+    string writeString;
+    cout << "Write the memory address of a character array that you want to overwrite. Must hold a string: 0x";
+    cin >> hex >> memoryAddress;
+    cout << "Write the characters you want to write into the memory address. Must not be longer than 128 characters." << endl;
+    cin >> dec >> writeString;
+    WPMSuccess = WriteProcessMemory(fProcess, (LPVOID)memoryAddress, &writeString, sizeof(string), NULL);
+    if (WPMSuccess == 0)
+    {
+        cout << "WriteProcessMemory method failed with the following error: " << GetLastError() << endl;
+        bool chSuccess = CloseHandle(fProcess);
+        if (chSuccess == 0)
         {
             cout << "CloseHandle method failed with the following error: " << GetLastError() << endl;
         }
